@@ -1,7 +1,9 @@
 package com.antontkach.hardwareshop.web;
 
+import com.antontkach.hardwareshop.dto.ProductTo;
 import com.antontkach.hardwareshop.model.Product;
 import com.antontkach.hardwareshop.service.ProductService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ import static com.antontkach.hardwareshop.util.ValidationUtil.checkNew;
 @RestController
 @RequestMapping(value = ProductController.REST_URL, produces = MediaType.APPLICATION_JSON_VALUE)
 @Slf4j
+@Tag(name = "Hardware Shop Controller")
 public class ProductController {
     public static final String REST_URL = "/api/admin/hardwareshop";
 
@@ -27,23 +30,23 @@ public class ProductController {
     private ProductService service;
 
     @GetMapping("/type/{type}")
-    public List<Product> getProductsByType(@PathVariable String type) {
+    public List<Product> getAllByType(@PathVariable String type) {
         log.info("getAll by {}", type);
         return service.getAllByType(type);
     }
 
     @GetMapping("/{id}")
-    public Product getProductById(@PathVariable Integer id) {
+    public Product getById(@PathVariable Integer id) {
         log.info("get {}", id);
         return service.getById(id);
     }
 
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Product> add(@Valid @RequestBody Product product) {
-        log.info("create {}", product);
-        checkNew(product);
-        Product created = service.save(product);
+    public ResponseEntity<Product> create(@Valid @RequestBody ProductTo productTo) {
+        log.info("create {}", productTo);
+        checkNew(productTo);
+        Product created = service.save(productTo);
         URI uriOfNewResource = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path(REST_URL + "/{id}")
                 .buildAndExpand(created.getId()).toUri();
@@ -52,10 +55,10 @@ public class ProductController {
 
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(@Valid @RequestBody Product product, @PathVariable int id) {
-        log.info("update {} with id={}", product, id);
-        assureIdConsistent(product, id);
-        service.save(product);
+    public void update(@Valid @RequestBody ProductTo productTo, @PathVariable int id) {
+        log.info("update {} with id={}", productTo, id);
+        assureIdConsistent(productTo, id);
+        service.update(id, productTo);
     }
 
     @DeleteMapping("/{id}")
