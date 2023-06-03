@@ -1,13 +1,12 @@
 package com.antontkach.hardwareshop.web;
 
+import com.antontkach.hardwareshop.dto.ProductTo;
 import com.antontkach.hardwareshop.error.NotFoundException;
-import com.antontkach.hardwareshop.model.Desktop;
 import com.antontkach.hardwareshop.service.ProductService;
 import com.antontkach.hardwareshop.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static com.antontkach.hardwareshop.ProductTestData.*;
@@ -42,6 +41,24 @@ public class ProductRestControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    void getAllByMonitorType() throws Exception {
+        perform(MockMvcRequestBuilders.get(REST_URL + "type/Monitor"))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(MONITOR_MATCHER.contentJson(monitor1, monitor2, monitor3));
+    }
+
+    @Test
+    void getAllByHardDriveType() throws Exception {
+        perform(MockMvcRequestBuilders.get(REST_URL + "type/Hard Drive"))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(HARD_DRIVE_MATCHER.contentJson(hardDrive1, hardDrive2, hardDrive3));
+    }
+
+    @Test
     void getById() throws Exception {
         perform(MockMvcRequestBuilders.get(REST_URL + DESKTOP2_ID))
                 .andExpect(status().isOk())
@@ -66,44 +83,8 @@ public class ProductRestControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void updateDesktop() throws Exception {
-        Desktop updated = getUpdated();
-        perform(MockMvcRequestBuilders.put(REST_URL + DESKTOP3_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.writeValue(updated)))
-                .andExpect(status().isNoContent());
-
-        DESKTOP_MATCHER.assertMatch((Desktop) service.getById(DESKTOP3_ID), updated);
-    }
-
-    @Test
-    void updateNotFound() throws Exception {
-        Desktop updated = getUpdated();
-        perform(MockMvcRequestBuilders.put(REST_URL + NOT_FOUND)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.writeValue(updated)))
-                .andDo(print())
-                .andExpect(status().isUnprocessableEntity());
-    }
-
-    @Test
-    void createDesktop() throws Exception {
-        Desktop newDesktop = getNew();
-        ResultActions action = perform(MockMvcRequestBuilders.post(ProductController.REST_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.writeValue(newDesktop)))
-                .andExpect(status().isCreated());
-
-        Desktop created = DESKTOP_MATCHER.readFromJson(action);
-        int newId = created.id();
-        newDesktop.setId(newId);
-        DESKTOP_MATCHER.assertMatch(created, newDesktop);
-        DESKTOP_MATCHER.assertMatch((Desktop) service.getById(newId), newDesktop);
-    }
-
-    @Test
-    void createDuplicateDesktop() throws Exception {
-        Desktop newDesktop = getNew();
+    void createDuplicate() throws Exception {
+        ProductTo newDesktop = getNewDesktop();
         newDesktop.setManufacturer("KINGDEL");
         newDesktop.setSerialNumber("D002");
         perform(MockMvcRequestBuilders.post(ProductController.REST_URL)
@@ -111,14 +92,5 @@ public class ProductRestControllerTest extends AbstractControllerTest {
                 .content(JsonUtil.writeValue(newDesktop)))
                 .andDo(print())
                 .andExpect(status().isConflict());
-    }
-
-    @Test
-    void createInvalidDesktop() throws Exception {
-        Desktop newDesktop = new Desktop(null, null, null, null, 1, null, null);
-        perform(MockMvcRequestBuilders.post(ProductController.REST_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.writeValue(newDesktop)))
-                .andExpect(status().isUnprocessableEntity());
     }
 }
